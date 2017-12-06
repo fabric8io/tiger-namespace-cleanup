@@ -17,7 +17,11 @@ deployRemoteClusterNode(configSecretName: 'tiger-config'){
     // get a list of openshft project names that are pull requests
     def namespaces
     container('clients'){
-        def namespacelist = sh(script: 'kubectl get namespaces | grep Active | grep jenkins-pr-', returnStdout: true).toString().trim()
+        sh 'gcloud auth activate-service-account --key-file /root/home/.kube/config.json'
+        sh 'gcloud config set container/use_client_certificate True'
+        sh "gcloud alpha container clusters get-credentials tiger -z europe-west1-b"
+
+        def namespacelist = sh(script: "kubectl get namespaces | grep Active | grep jenkins-pr- | awk '{print \$1}'", returnStdout: true).toString().trim()
         namespaces = splitNamespaceNames(namespacelist)
     }
 
@@ -36,16 +40,20 @@ deployRemoteClusterNode(configSecretName: 'tiger-config'){
         openPRs = null
     }
     if (namespaces){
-        def command = 'kubectl delete namespace'
+        def command
         for (n in namespaces) {
-            command = command + ' ' + n
+            command = 'kubectl delete namespace' + ' ' + n
+            echo "running: ${command}"
+
+            container('clients'){
+                sh 'gcloud auth activate-service-account --key-file /root/home/.kube/config.json'
+                sh 'gcloud config set container/use_client_certificate True'
+                sh "gcloud alpha container clusters get-credentials tiger -z europe-west1-b"
+                //sh command
+            }
 
         }
-        echo "running: ${command}"
-        container('clients'){
-            echo "command:$command"
-            //sh command
-        }
+
     } else {
         echo 'no namespace to delete'
     }
@@ -68,9 +76,10 @@ def splitNamespaceNames(namespaceNames) {
     def namespaces = namespaceNames.split('\\n')
     def list = []
     for (ns in namespaces) {
-        list << ns.replace("Active", "").trim()
+        list << ns.trim()
     }
     namespaces = null
+    echo "$list"
     return list
 }
 
