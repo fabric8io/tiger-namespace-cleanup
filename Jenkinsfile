@@ -1,6 +1,9 @@
 @Library('github.com/fabric8io/fabric8-pipeline-library@master')
 def dummy
 deployRemoteClusterNode(configSecretName: 'tiger-config'){
+    sh 'gcloud auth activate-service-account --key-file /root/home/.kube/config.json'
+    sh 'gcloud config set container/use_client_certificate True'
+    sh "gcloud alpha container clusters get-credentials ${clusterName} -z ${clusterZone}"
     properties(
         [
             pipelineTriggers([cron('0 */3 * * *')]),
