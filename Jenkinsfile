@@ -49,7 +49,7 @@ deployRemoteClusterNode(configSecretName: 'tiger-config'){
                 sh 'gcloud auth activate-service-account --key-file /root/home/.kube/config.json'
                 sh 'gcloud config set container/use_client_certificate True'
                 sh "gcloud alpha container clusters get-credentials tiger -z europe-west1-b"
-                //sh command
+                sh command
             }
 
         }
